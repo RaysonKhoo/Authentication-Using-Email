@@ -3,6 +3,8 @@ package org.example.event;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.Entity.User;
@@ -10,8 +12,11 @@ import org.example.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
@@ -26,19 +31,30 @@ public class RegistrationEventListener implements ApplicationListener<Registrati
 
     private final UserService userService;
 
-
+    private final JavaMailSender mailSender;
+    private User user;
     @Override
     public void onApplicationEvent(RegistrationEvent event) {
 
-        User user = event.getUser();
+        user = event.getUser();
         Map<String, Object> claims = Map.of();
         String verificationToken = createJwtToken(user.getEmail(),claims);
 
         userService.saveUserVerificationToken(user, verificationToken);
 
+        String baseUrl = event.getApplicationUrl();
+        // Remove any trailing colon or extra characters
+        if (baseUrl.endsWith(":")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
 
-        String url = event.getApplicationUrl()+"/register/verifyEmail?token="+verificationToken;
-        log.info("click the link to verify your registration:{}", url);
+        String url = baseUrl+"/register/verifyEmail?token="+verificationToken;
+        try {
+            sendVerificationEmail(url);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        log.info("click the link to verify your registration: {}", url);
     }
 
     public static String createJwtToken(String email, Map<String, Object> claims) {
@@ -53,5 +69,22 @@ public class RegistrationEventListener implements ApplicationListener<Registrati
 
     private static Key getSignKey() {
         return Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
+    }
+
+    public void sendVerificationEmail(String url) throws MessagingException, UnsupportedEncodingException {
+        String subject = "Email Verification";
+        String senderName ="User Registration Portal Service";
+        String mailContent = "<p> Hi, "+ user.getFirstName()+ "</p>"+
+                "<p>Thank you for registering with us,Please, follow the link below to complete your registration.</p>" +
+                "<a href=\"" + url + "\">Verify your email to activate your account</a>"+
+                "<p> Thank you <br> Users Registration Portal Service</p>";
+        MimeMessage message = mailSender.createMimeMessage();
+        var messageHelper =new MimeMessageHelper(message);
+        messageHelper.setFrom("rayson.khoo@beans.com.my", senderName);
+        messageHelper.setTo(user.getEmail());
+        messageHelper.setSubject(subject);
+        messageHelper.setText(mailContent, true);
+        mailSender.send(message);
+
     }
 }
