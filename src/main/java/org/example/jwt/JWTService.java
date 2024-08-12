@@ -8,7 +8,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +57,7 @@ public class JWTService {
 
     public boolean validateToken(String theToken, UserDetails userDetails){
         final String email = extractUsernameFromToken(theToken);
-        return (email.equals(userDetails.getUsername()) && !isTokenExpired(theToken));
+        return (email.equals(userDetails.getUsername()) && isTokenExpired(theToken));
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -74,7 +73,7 @@ public class JWTService {
                 .getBody();
 
     }
-    private boolean isTokenExpired(String theToken) {
-        return extractExpirationTimeFromToken(theToken).before(new Date());
+    public boolean isTokenExpired(String theToken) {
+        return !extractExpirationTimeFromToken(theToken).before(new Date());
     }
 }

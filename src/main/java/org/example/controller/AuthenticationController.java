@@ -1,8 +1,9 @@
 package org.example.controller;
 
-import org.example.dto.UserDTO;
-import org.example.service.UserService;
 import org.example.Entity.User;
+import org.example.dto.UserDTO;
+import org.example.jwt.JWTService;
+import org.example.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequestMapping(path = "/api/user")
 public class AuthenticationController {
 
+    private JWTService jwtService;
     private final UserService userService;
     public AuthenticationController(UserService userService){
         this.userService =userService;
@@ -33,6 +35,7 @@ public class AuthenticationController {
     public ResponseEntity<List<User>> getALlUserDetails(){
         return new ResponseEntity<>(userService.getUsers(), HttpStatus.OK);
     }
+
 
     @GetMapping(path = "/list/{email}")
     public ResponseEntity<Object> getUserByEmail(@PathVariable String email) {

@@ -80,6 +80,7 @@ public class UserDTO {
     private int month;
     private int year;
     private String role;
+    private String accessToken;
 
     public String getRole() {
         return role;

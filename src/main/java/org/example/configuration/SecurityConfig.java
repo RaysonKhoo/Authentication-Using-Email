@@ -35,10 +35,8 @@ public class    SecurityConfig {
 
     private static final String[] SECURED_URLs = {"/api/user/**"};
     private static final String[] UN_SECURED_URLs={
-            "/authentication/**",
-            "/register/**"
-
-
+            "/register/**",
+            "/authentication/**"
     };
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,7 +49,7 @@ public class    SecurityConfig {
                 .authorizeHttpRequests(
                         req->req.requestMatchers(UN_SECURED_URLs)
                                 .permitAll()  // Allow access to the registration and authenticate endpoints
-                                .requestMatchers(SECURED_URLs).hasAuthority("ADMIN")  // Require "ROLE_ADMIN" authority for secured URLs
+                                .requestMatchers(SECURED_URLs).hasAuthority("ADMIN")// Require "ROLE_ADMIN" authority for secured URLs
                                 .anyRequest()
                                 .authenticated()  // Require authentication for all other requests
                 ).userDetailsService(userRegistrationDetailsService)
